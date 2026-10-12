@@ -1,0 +1,13 @@
+
+name: Deploy StudentCompanion Web
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  deploy_web:
+    name: Deploy website
+    type: deploy
+    params:
+      prod: true
