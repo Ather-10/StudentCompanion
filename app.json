@@ -10,6 +10,7 @@
       "supportsTablet": true
     },
     "android": {
+       "package": "com.ather.studentcompanion",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -17,6 +18,13 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       }
     },
+    "plugins": [
+        "expo-notifications",
+        ["expo-image-picker", {
+          "photosPermission": "Allow Student Companion to access your photos for your profile picture.",
+          "cameraPermission": "Allow Student Companion to use the camera for your profile picture."
+        }]
+      ],
     "web": {
       "favicon": "./assets/favicon.png"
     },
