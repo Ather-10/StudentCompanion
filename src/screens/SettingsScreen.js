@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Platform, Linking, Share } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme, useStyles } from '../theme/ThemeContext';
 import { useSettings } from '../context/SettingsContext';
@@ -14,8 +14,8 @@ import PrivacyModal from '../components/PrivacyModal';
 import ConfirmModal from '../components/ConfirmModal';
 import { setupNotifications, sendTestAlarm } from '../utils/notifications';
 import { APP } from '../config/app';
-
-const storeUrl = `https://play.google.com/store/apps/details?id=${APP.packageId}`;
+import { rateApp, shareApp, sendFeedback } from '../utils/links';
+import TonePicker from '../components/TonePicker';
 
 export default function SettingsScreen({ navigation }) {
   const { C, mode, setMode } = useTheme();
@@ -35,23 +35,13 @@ export default function SettingsScreen({ navigation }) {
   // Turning an alarm on also asks the phone for notification permission.
   const toggle = async (key, on) => {
     update({ [key]: on });
-    if (on) await setupNotifications();
+    if (on) await setupNotifications(settings.alarmTone);
   };
-
-  const rateApp = () => {
-    if (Platform.OS === 'android') {
-      Linking.openURL(`market://details?id=${APP.packageId}`).catch(() => Linking.openURL(storeUrl).catch(() => {}));
-    } else {
-      Linking.openURL(storeUrl).catch(() => {});
-    }
-  };
-  const shareApp = () => Share.share({ message: `Try ${APP.name} - CGPA calculator, timetable, exam countdown and focus timer in one app. ${storeUrl}` }).catch(() => {});
-  const sendFeedback = () => Linking.openURL(`mailto:${APP.supportEmail}?subject=${encodeURIComponent(APP.name + ' feedback')}`).catch(() => {});
 
   const runTest = async () => {
-    const r = await sendTestAlarm();
+    const r = await sendTestAlarm(settings.alarmTone);
     setTestMsg(
-      r === 'sent' ? 'Test alarm will ring in 3 seconds.'
+      r === 'sent' ? 'Test alarm will ring in 3 seconds. Swipe it away to stop.'
       : r === 'web' ? 'Browser test: you should hear a beep. On your phone it shows a notification.'
       : 'Notifications are blocked. Turn them on in your phone: Settings > Apps > ' + APP.name + ' > Notifications.'
     );
@@ -110,6 +100,17 @@ export default function SettingsScreen({ navigation }) {
           right={<Segment value={settings.scale} onChange={(v) => update({ scale: v })} options={[{ value: '4.0', label: '4.0' }, { value: '%', label: '%' }]} />}
         />
       </View>
+
+      {/* Alarm sound */}
+      <Text style={common.h2}>Alarm sound</Text>
+      <TonePicker
+        value={settings.alarmTone}
+        onChange={(id) => {
+          update({ alarmTone: id });
+          setupNotifications(id);
+        }}
+      />
+      <Text style={styles.hint}>Each alarm rings for 15 seconds, up to 3 times, until you swipe it away.</Text>
 
       {/* Alarms */}
       <Text style={common.h2}>Alarms & reminders</Text>

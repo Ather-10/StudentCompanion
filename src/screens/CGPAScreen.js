@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, TextInput, Modal } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useStyles } from '../theme/ThemeContext';
 import { useSettings } from '../context/SettingsContext';
 import { useCommon, getShadow } from '../theme/commonStyles';
@@ -14,6 +15,7 @@ export default function CGPAScreen() {
   const { scale } = useSettings();
   const common = useCommon();
   const styles = useStyles(makeStyles);
+  const insets = useSafeAreaInsets();
 
   const [sems, setSems] = useState(() => [newSemester()]);
   const [picker, setPicker] = useState(null); // { sid, cid }
@@ -129,7 +131,7 @@ export default function CGPAScreen() {
       <Modal visible={!!picker} transparent animationType="fade" onRequestClose={() => setPicker(null)}>
         <View style={styles.backdrop}>
           <TouchableOpacity activeOpacity={1} style={StyleSheet.absoluteFill} onPress={() => setPicker(null)} accessibilityLabel="Close" />
-          <View style={styles.sheet}>
+          <View style={[styles.sheet, { paddingBottom: 28 + insets.bottom }]}>
             <Text style={styles.sheetTitle}>Select grade</Text>
             <View style={styles.gradeGrid}>
               {GRADES.map((x) => (

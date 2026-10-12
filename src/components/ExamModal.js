@@ -3,6 +3,7 @@ import {
   StyleSheet, Text, View, TouchableOpacity, TextInput, Modal, ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useStyles } from '../theme/ThemeContext';
 import { COLORS, isValidTime, format12, formatTimeInput } from '../utils/timetable';
 import { MONTHS, isValidDate, daysUntil, formatDate, countdownText } from '../utils/exams';
@@ -10,6 +11,7 @@ import { MONTHS, isValidDate, daysUntil, formatDate, countdownText } from '../ut
 export default function ExamModal({ visible, initial, onSave, onDelete, onClose }) {
   const { C } = useTheme();
   const styles = useStyles(makeStyles);
+  const insets = useSafeAreaInsets();
   const editing = !!initial;
 
   const [subject, setSubject] = useState('');
@@ -60,7 +62,7 @@ export default function ExamModal({ visible, initial, onSave, onDelete, onClose 
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.backdrop}>
         <TouchableOpacity activeOpacity={1} style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: 20 + insets.bottom }]}>
           <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <Text style={styles.title}>{editing ? 'Edit exam' : 'Add exam'}</Text>
 

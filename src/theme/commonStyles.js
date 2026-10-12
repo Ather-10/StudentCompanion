@@ -10,7 +10,7 @@ export const getShadow = (C) =>
 const makeCommon = (C) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: C.paper },
-    content: { padding: 20, paddingTop: 56, paddingBottom: 32 },
+    content: { padding: 20, paddingTop: 12, paddingBottom: 32 },
     center: { alignItems: 'center', justifyContent: 'center', padding: 32 },
 
     hello: { fontSize: 14, color: C.muted, marginBottom: 2 },

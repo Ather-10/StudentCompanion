@@ -13,6 +13,7 @@ export const DEFAULT_SETTINGS = {
   examReminders: true,
   examWhen: 'both', // 'before' | 'day' | 'both'
   focusAlarm: true,
+  alarmTone: 'classic', // see src/utils/tones.js
 };
 
 export function SettingsProvider({ children }) {

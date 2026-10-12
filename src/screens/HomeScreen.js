@@ -8,8 +8,6 @@ import { TOOLS } from '../data/sample';
 import { useTimetable } from '../context/TimetableContext';
 import { useExams } from '../context/ExamsContext';
 import { useFocus } from '../context/FocusContext';
-import { useSettings } from '../context/SettingsContext';
-import Avatar from '../components/Avatar';
 import { formatFocus } from '../utils/focus';
 import { splitExams, daysUntil, MONTHS } from '../utils/exams';
 import { DAYS, todayIndex, classesForDay, format12 } from '../utils/timetable';
@@ -22,8 +20,6 @@ export default function HomeScreen({ navigation }) {
   const todays = classesForDay(classes, todayIndex());
   const { exams } = useExams();
   const { focusSec } = useFocus();
-  const { settings } = useSettings();
-  const firstName = settings.name.trim().split(/\s+/)[0];
   const next = splitExams(exams).upcoming[0];
   const daysLeft = next ? daysUntil(next) : null;
   const now = new Date();
@@ -31,16 +27,6 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <ScrollView style={common.screen} contentContainerStyle={common.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.topRow}>
-        <View>
-          <Text style={common.hello}>{firstName ? `Welcome back, ${firstName} 👋` : 'Welcome back 👋'}</Text>
-          <Text style={common.h1}>Today's plan</Text>
-        </View>
-        <TouchableOpacity onPress={() => navigation.navigate('Settings')} accessibilityLabel="Open settings">
-          <Avatar size={42} />
-        </TouchableOpacity>
-      </View>
-
       <View style={common.hero}>
         <Text style={common.heroLabel}>{dateLine}</Text>
         <View style={styles.statRow}>

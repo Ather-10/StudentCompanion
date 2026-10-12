@@ -3,12 +3,14 @@ import {
   StyleSheet, Text, View, TouchableOpacity, TextInput, Modal, ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, useStyles } from '../theme/ThemeContext';
 import { DAYS, COLORS, isValidTime, toMinutes, format12, formatTimeInput } from '../utils/timetable';
 
 export default function ClassModal({ visible, initial, defaultDay, onSave, onDelete, onClose }) {
   const { C } = useTheme();
   const styles = useStyles(makeStyles);
+  const insets = useSafeAreaInsets();
   const editing = !!initial;
 
   const [name, setName] = useState('');
@@ -55,7 +57,7 @@ export default function ClassModal({ visible, initial, defaultDay, onSave, onDel
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.backdrop}>
         <TouchableOpacity activeOpacity={1} style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: 20 + insets.bottom }]}>
             <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               <Text style={styles.title}>{editing ? 'Edit class' : 'Add class'}</Text>
 

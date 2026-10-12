@@ -1,9 +1,9 @@
 import { Platform } from 'react-native';
+import { DEFAULT_TONE, toneById } from './tones';
 
 // Notifications only exist on the phone (Android/iOS). In the browser everything here quietly does nothing.
 const isNative = Platform.OS !== 'web';
 const N = isNative ? require('expo-notifications') : null;
-const CHANNEL = 'alarms';
 
 if (N) {
   N.setNotificationHandler({
@@ -16,18 +16,43 @@ if (N) {
   });
 }
 
-// Creates the Android channel and asks for permission. Returns true if allowed.
-export async function setupNotifications() {
+// One Android channel per tone (a channel's sound cannot be changed later).
+const channelFor = (toneId) => 'alarm_v1_' + toneById(toneId).id;
+
+// Vibrate 0.5s on / 0.5s off for 15s, three times with a 3s pause (matches the tone file).
+const VIBRATION = (() => {
+  const p = [0];
+  for (let ring = 0; ring < 3; ring++) {
+    for (let i = 0; i < 15; i++) p.push(500, i === 14 ? 3500 : 500);
+  }
+  return p;
+})();
+
+async function ensureChannel(toneId) {
+  if (Platform.OS !== 'android') return;
+  const tone = toneById(toneId);
+  const base = {
+    name: `Alarm - ${tone.label}`,
+    importance: N.AndroidImportance.MAX,
+    vibrationPattern: VIBRATION,
+    enableVibrate: true,
+    sound: tone.file,
+  };
+  try {
+    await N.setNotificationChannelAsync(channelFor(toneId), {
+      ...base,
+      audioAttributes: { usage: N.AndroidAudioUsage.ALARM, contentType: N.AndroidAudioContentType.SONIFICATION },
+    });
+  } catch (e) {
+    await N.setNotificationChannelAsync(channelFor(toneId), base);
+  }
+}
+
+// Creates the alarm channel and asks for permission. Returns true if allowed.
+export async function setupNotifications(toneId = DEFAULT_TONE) {
   if (!N) return false;
   try {
-    if (Platform.OS === 'android') {
-      await N.setNotificationChannelAsync(CHANNEL, {
-        name: 'Timers & reminders',
-        importance: N.AndroidImportance.MAX,
-        vibrationPattern: [0, 300, 200, 300],
-        sound: 'default',
-      });
-    }
+    await ensureChannel(toneId);
     const current = await N.getPermissionsAsync();
     if (current.status === 'granted') return true;
     if (current.canAskAgain === false) return false;
@@ -56,16 +81,16 @@ export const focusAlarmText = (mode) =>
 let focusToken = 0;
 
 // Rings after `seconds`, even if the app is in the background or the phone is locked.
-export async function scheduleFocusAlarm(seconds, mode) {
+export async function scheduleFocusAlarm(seconds, mode, toneId = DEFAULT_TONE) {
   if (!N) return;
   const token = ++focusToken;
-  const ok = await setupNotifications();
+  const ok = await setupNotifications(toneId);
   if (!ok || token !== focusToken) return;
   await cancelKind('focus');
   const { title, body } = focusAlarmText(mode);
   await N.scheduleNotificationAsync({
-    content: { title, body, sound: 'default', data: { kind: 'focus' } },
-    trigger: { type: N.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: Math.max(1, Math.round(seconds)), repeats: false, channelId: CHANNEL },
+    content: { title, body, sound: 'default', priority: 'max', data: { kind: 'focus' } },
+    trigger: { type: N.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: Math.max(1, Math.round(seconds)), repeats: false, channelId: channelFor(toneId) },
   });
 }
 
@@ -106,6 +131,8 @@ async function doSync({ classes = [], exams = [], settings }) {
   if ((await N.getPermissionsAsync()).status !== 'granted') return;
 
   const T = N.SchedulableTriggerInputTypes;
+  const channelId = channelFor(settings.alarmTone);
+  await ensureChannel(settings.alarmTone);
 
   // Classes repeat every week at (start time - lead minutes)
   if (wantClasses) {
@@ -123,10 +150,11 @@ async function doSync({ classes = [], exams = [], settings }) {
           title: c.name,
           body: (leadMin ? `Class starts in ${leadMin} min` : 'Class is starting now') + (c.room ? ` · ${c.room}` : ''),
           sound: 'default',
+          priority: 'max',
           data: { kind: 'plan' },
         },
         // Our days: 0 = Monday. Expo weekdays: 1 = Sunday ... 7 = Saturday.
-        trigger: { type: T.WEEKLY, weekday: ((day + 1) % 7) + 1, hour: Math.floor(total / 60), minute: total % 60, channelId: CHANNEL },
+        trigger: { type: T.WEEKLY, weekday: ((day + 1) % 7) + 1, hour: Math.floor(total / 60), minute: total % 60, channelId },
       });
     }
   }
@@ -148,8 +176,8 @@ async function doSync({ classes = [], exams = [], settings }) {
       for (const it of items) {
         if (it.date.getTime() <= now) continue;
         await N.scheduleNotificationAsync({
-          content: { title: it.title, body: it.body, sound: 'default', data: { kind: 'plan' } },
-          trigger: { type: T.DATE, date: it.date, channelId: CHANNEL },
+          content: { title: it.title, body: it.body, sound: 'default', priority: 'max', data: { kind: 'plan' } },
+          trigger: { type: T.DATE, date: it.date, channelId },
         });
       }
     }
@@ -158,16 +186,16 @@ async function doSync({ classes = [], exams = [], settings }) {
 
 // Rings in 3 seconds so you can check that alarms work on this phone.
 // Returns 'sent' | 'denied' | 'web'
-export async function sendTestAlarm() {
+export async function sendTestAlarm(toneId = DEFAULT_TONE) {
   if (!N) {
     playWebBeep();
     return 'web';
   }
-  const ok = await setupNotifications();
+  const ok = await setupNotifications(toneId);
   if (!ok) return 'denied';
   await N.scheduleNotificationAsync({
-    content: { title: 'Test alarm ✅', body: 'Your alarms are working.', sound: 'default', data: { kind: 'test' } },
-    trigger: { type: N.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3, repeats: false, channelId: CHANNEL },
+    content: { title: 'Test alarm ✅', body: 'Your alarms are working. Swipe this away to stop.', sound: 'default', priority: 'max', data: { kind: 'test' } },
+    trigger: { type: N.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3, repeats: false, channelId: channelFor(toneId) },
   });
   return 'sent';
 }

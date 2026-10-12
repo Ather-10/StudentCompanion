@@ -10,6 +10,7 @@ const FocusContext = createContext(null);
 export function FocusProvider({ children }) {
   const { settings } = useSettings();
   const alarmOn = settings.focusAlarm;
+  const tone = settings.alarmTone;
   const [lengths, setLengths] = useState(DEFAULT_LENGTHS); // minutes for each mode
   const [mode, setMode] = useState('focus'); // 'focus' | 'short' | 'long'
   const [remaining, setRemaining] = useState(DEFAULT_LENGTHS.focus * 60);
@@ -71,7 +72,7 @@ export function FocusProvider({ children }) {
         endAt.current = Date.now() + remaining * 1000;
         lastTick.current = Date.now();
         setRunning(true);
-        if (alarmOn) scheduleFocusAlarm(remaining, mode);
+        if (alarmOn) scheduleFocusAlarm(remaining, mode, tone);
       },
       pause: () => {
         cancelFocusAlarm();
@@ -91,7 +92,7 @@ export function FocusProvider({ children }) {
         if (m === mode) setRemaining(minutes * 60);
       },
     };
-  }, [mode, remaining, running, sessions, lengths, focusSec, alarmOn]);
+  }, [mode, remaining, running, sessions, lengths, focusSec, alarmOn, tone]);
 
   return <FocusContext.Provider value={value}>{children}</FocusContext.Provider>;
 }

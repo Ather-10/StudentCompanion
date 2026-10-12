@@ -10,7 +10,7 @@
       "supportsTablet": true
     },
     "android": {
-       "package": "com.ather.studentcompanion",
+      "package": "com.ather.studentcompanion",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -19,12 +19,24 @@
       }
     },
     "plugins": [
-        "expo-notifications",
-        ["expo-image-picker", {
+            ["expo-notifications", {
+          "sounds": [
+            "./assets/sounds/alarm_classic.wav",
+            "./assets/sounds/alarm_digital.wav",
+            "./assets/sounds/alarm_chime.wav",
+            "./assets/sounds/alarm_rise.wav",
+            "./assets/sounds/alarm_soft.wav"
+          ]
+        }],
+              [
+        "expo-image-picker",
+        {
           "photosPermission": "Allow Student Companion to access your photos for your profile picture.",
           "cameraPermission": "Allow Student Companion to use the camera for your profile picture."
-        }]
+        }
       ],
+      "expo-audio"
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     },

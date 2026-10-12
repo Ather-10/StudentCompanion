@@ -13,11 +13,11 @@ export default function NotificationSync() {
   useEffect(() => {
     if (!settingsLoaded || !classesLoaded || !examsLoaded) return; // wait for saved data
     if (settings.classReminders || settings.examReminders) {
-      setupNotifications().then(() => syncPlanReminders({ classes, exams, settings }));
+      setupNotifications(settings.alarmTone).then(() => syncPlanReminders({ classes, exams, settings }));
     } else {
       syncPlanReminders({ settings });
     }
-  }, [settingsLoaded, classesLoaded, examsLoaded, classes, exams, settings.classReminders, settings.examReminders, settings.leadMin, settings.examWhen]);
+  }, [settingsLoaded, classesLoaded, examsLoaded, classes, exams, settings.classReminders, settings.examReminders, settings.leadMin, settings.examWhen, settings.alarmTone]);
 
   return null;
 }
