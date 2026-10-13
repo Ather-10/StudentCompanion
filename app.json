@@ -1,25 +1,29 @@
 {
   "expo": {
-    "name": "StudentCompanion",
+    "name": "Student Companion",
     "slug": "StudentCompanion",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "package": "com.ather.studentcompanion",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#5B4BFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       }
     },
     "plugins": [
-            ["expo-notifications", {
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#5B4BFF",
           "sounds": [
             "./assets/sounds/alarm_classic.wav",
             "./assets/sounds/alarm_digital.wav",
@@ -27,15 +31,24 @@
             "./assets/sounds/alarm_rise.wav",
             "./assets/sounds/alarm_soft.wav"
           ]
-        }],
-              [
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "Allow Student Companion to access your photos for your profile picture.",
           "cameraPermission": "Allow Student Companion to use the camera for your profile picture."
         }
       ],
-      "expo-audio"
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#16132E"
+        }
+      ]
     ],
     "web": {
       "favicon": "./assets/favicon.png"
