@@ -20,8 +20,12 @@ if (N) {
 const channelFor = (toneId) => 'alarm_v1_' + toneById(toneId).id;
 
 // Android cuts long notification sounds, so each ring is a short tone (about 4 seconds).
-// To ring more than once, the alarm is scheduled 3 times, 12 seconds apart.
-const RING_OFFSETS = [0, 12, 24];
+// To ring more than once, the alarm is scheduled several times, a few seconds apart.
+// Change these two numbers to ring more or fewer times.
+const RING_COUNT = 7;
+const RING_GAP = 12; // seconds between rings
+const RING_OFFSETS = Array.from({ length: RING_COUNT }, (_, i) => i * RING_GAP);
+export { RING_COUNT };
 const VIBRATION = [0, 400, 200, 400, 200, 400, 200, 400];
 
 async function ensureChannel(toneId) {
@@ -86,7 +90,7 @@ export async function scheduleFocusAlarm(seconds, mode, toneId = DEFAULT_TONE) {
   const { title, body } = focusAlarmText(mode);
   for (const offset of RING_OFFSETS) {
     await N.scheduleNotificationAsync({
-      content: { title, body, sound: 'default', priority: 'max', data: { kind: 'focus' } },
+      content: { title, body, sound: 'default', priority: 'max', data: { kind: 'focus', group: 'focus' } },
       trigger: { type: N.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: Math.max(1, Math.round(seconds)) + offset, repeats: false, channelId: channelFor(toneId) },
     });
   }
@@ -95,9 +99,19 @@ export async function scheduleFocusAlarm(seconds, mode, toneId = DEFAULT_TONE) {
 // Tapping an alarm opens the app and stops the rings that have not played yet.
 export function listenForAlarmTaps() {
   if (!N) return () => {};
-  const sub = N.addNotificationResponseReceivedListener(() => {
-    cancelKind('focus').catch(() => {});
-    cancelKind('test').catch(() => {});
+  const sub = N.addNotificationResponseReceivedListener(async (response) => {
+    try {
+      const data = response.notification.request.content.data || {};
+      if (!data.group) return;
+      const all = await N.getAllScheduledNotificationsAsync();
+      await Promise.all(
+        all
+          .filter((n) => n.content.data && n.content.data.group === data.group)
+          .map((n) => N.cancelScheduledNotificationAsync(n.identifier))
+      );
+    } catch (e) {
+      // nothing to cancel
+    }
   });
   return () => sub.remove();
 }
@@ -185,7 +199,7 @@ async function doSync({ classes = [], exams = [], settings }) {
         if (it.date.getTime() <= now) continue;
         for (const offset of RING_OFFSETS) {
           await N.scheduleNotificationAsync({
-            content: { title: it.title, body: it.body, sound: 'default', priority: 'max', data: { kind: 'plan' } },
+            content: { title: it.title, body: it.body, sound: 'default', priority: 'max', data: { kind: 'plan', group: `exam-${e.id}-${it.date.getTime()}` } },
             trigger: { type: T.DATE, date: new Date(it.date.getTime() + offset * 1000), channelId },
           });
         }
@@ -206,7 +220,7 @@ export async function sendTestAlarm(toneId = DEFAULT_TONE) {
   await cancelKind('test');
   for (const offset of RING_OFFSETS) {
     await N.scheduleNotificationAsync({
-      content: { title: 'Test alarm ✅', body: 'Your alarms are working. Tap to stop.', sound: 'default', priority: 'max', data: { kind: 'test' } },
+      content: { title: 'Test alarm ✅', body: 'Your alarms are working. Tap to stop.', sound: 'default', priority: 'max', data: { kind: 'test', group: 'test' } },
       trigger: { type: N.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3 + offset, repeats: false, channelId: channelFor(toneId) },
     });
   }

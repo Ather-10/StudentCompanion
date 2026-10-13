@@ -12,7 +12,7 @@ import Avatar from '../components/Avatar';
 import ProfileModal from '../components/ProfileModal';
 import PrivacyModal from '../components/PrivacyModal';
 import ConfirmModal from '../components/ConfirmModal';
-import { setupNotifications, sendTestAlarm } from '../utils/notifications';
+import { setupNotifications, sendTestAlarm, RING_COUNT } from '../utils/notifications';
 import { APP } from '../config/app';
 import { rateApp, shareApp, sendFeedback } from '../utils/links';
 import TonePicker from '../components/TonePicker';
@@ -41,7 +41,7 @@ export default function SettingsScreen({ navigation }) {
   const runTest = async () => {
     const r = await sendTestAlarm(settings.alarmTone);
     setTestMsg(
-      r === 'sent' ? 'Test alarm will ring 3 times, starting in 3 seconds. Tap it to stop.'
+      r === 'sent' ? `Test alarm will ring ${RING_COUNT} times, starting in 3 seconds. Tap it to stop.`
       : r === 'web' ? 'Browser test: you should hear a beep. On your phone it shows a notification.'
       : 'Notifications are blocked. Turn them on in your phone: Settings > Apps > ' + APP.name + ' > Notifications.'
     );
@@ -110,7 +110,7 @@ export default function SettingsScreen({ navigation }) {
           setupNotifications(id);
         }}
       />
-      <Text style={styles.hint}>Each alarm rings 3 times. Tap the notification to stop the rest.</Text>
+      <Text style={styles.hint}>Each alarm rings {RING_COUNT} times. Tap the notification to stop the rest.</Text>
 
       {/* Alarms */}
       <Text style={common.h2}>Alarms & reminders</Text>
