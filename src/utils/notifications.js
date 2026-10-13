@@ -19,14 +19,10 @@ if (N) {
 // One Android channel per tone (a channel's sound cannot be changed later).
 const channelFor = (toneId) => 'alarm_v1_' + toneById(toneId).id;
 
-// Vibrate 0.5s on / 0.5s off for 15s, three times with a 3s pause (matches the tone file).
-const VIBRATION = (() => {
-  const p = [0];
-  for (let ring = 0; ring < 3; ring++) {
-    for (let i = 0; i < 15; i++) p.push(500, i === 14 ? 3500 : 500);
-  }
-  return p;
-})();
+// Android cuts long notification sounds, so each ring is a short tone (about 4 seconds).
+// To ring more than once, the alarm is scheduled 3 times, 12 seconds apart.
+const RING_OFFSETS = [0, 12, 24];
+const VIBRATION = [0, 400, 200, 400, 200, 400, 200, 400];
 
 async function ensureChannel(toneId) {
   if (Platform.OS !== 'android') return;
@@ -88,10 +84,22 @@ export async function scheduleFocusAlarm(seconds, mode, toneId = DEFAULT_TONE) {
   if (!ok || token !== focusToken) return;
   await cancelKind('focus');
   const { title, body } = focusAlarmText(mode);
-  await N.scheduleNotificationAsync({
-    content: { title, body, sound: 'default', priority: 'max', data: { kind: 'focus' } },
-    trigger: { type: N.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: Math.max(1, Math.round(seconds)), repeats: false, channelId: channelFor(toneId) },
+  for (const offset of RING_OFFSETS) {
+    await N.scheduleNotificationAsync({
+      content: { title, body, sound: 'default', priority: 'max', data: { kind: 'focus' } },
+      trigger: { type: N.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: Math.max(1, Math.round(seconds)) + offset, repeats: false, channelId: channelFor(toneId) },
+    });
+  }
+}
+
+// Tapping an alarm opens the app and stops the rings that have not played yet.
+export function listenForAlarmTaps() {
+  if (!N) return () => {};
+  const sub = N.addNotificationResponseReceivedListener(() => {
+    cancelKind('focus').catch(() => {});
+    cancelKind('test').catch(() => {});
   });
+  return () => sub.remove();
 }
 
 export function cancelFocusAlarm() {
@@ -175,10 +183,12 @@ async function doSync({ classes = [], exams = [], settings }) {
       if (when !== 'before') items.push({ date: dayOf, title: `Exam today: ${e.subject}`, body: e.time ? 'Starts in about 1 hour. Good luck!' : 'Good luck!' });
       for (const it of items) {
         if (it.date.getTime() <= now) continue;
-        await N.scheduleNotificationAsync({
-          content: { title: it.title, body: it.body, sound: 'default', priority: 'max', data: { kind: 'plan' } },
-          trigger: { type: T.DATE, date: it.date, channelId },
-        });
+        for (const offset of RING_OFFSETS) {
+          await N.scheduleNotificationAsync({
+            content: { title: it.title, body: it.body, sound: 'default', priority: 'max', data: { kind: 'plan' } },
+            trigger: { type: T.DATE, date: new Date(it.date.getTime() + offset * 1000), channelId },
+          });
+        }
       }
     }
   }
@@ -193,10 +203,13 @@ export async function sendTestAlarm(toneId = DEFAULT_TONE) {
   }
   const ok = await setupNotifications(toneId);
   if (!ok) return 'denied';
-  await N.scheduleNotificationAsync({
-    content: { title: 'Test alarm ✅', body: 'Your alarms are working. Swipe this away to stop.', sound: 'default', priority: 'max', data: { kind: 'test' } },
-    trigger: { type: N.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3, repeats: false, channelId: channelFor(toneId) },
-  });
+  await cancelKind('test');
+  for (const offset of RING_OFFSETS) {
+    await N.scheduleNotificationAsync({
+      content: { title: 'Test alarm ✅', body: 'Your alarms are working. Tap to stop.', sound: 'default', priority: 'max', data: { kind: 'test' } },
+      trigger: { type: N.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3 + offset, repeats: false, channelId: channelFor(toneId) },
+    });
+  }
   return 'sent';
 }
 

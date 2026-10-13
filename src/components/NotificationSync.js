@@ -2,13 +2,15 @@ import { useEffect } from 'react';
 import { useSettings } from '../context/SettingsContext';
 import { useTimetable } from '../context/TimetableContext';
 import { useExams } from '../context/ExamsContext';
-import { setupNotifications, syncPlanReminders } from '../utils/notifications';
+import { setupNotifications, syncPlanReminders, listenForAlarmTaps } from '../utils/notifications';
 
 // Invisible helper: keeps phone reminders in step with your classes, exams and settings.
 export default function NotificationSync() {
   const { settings, loaded: settingsLoaded } = useSettings();
   const { classes, loaded: classesLoaded } = useTimetable();
   const { exams, loaded: examsLoaded } = useExams();
+
+  useEffect(() => listenForAlarmTaps(), []);
 
   useEffect(() => {
     if (!settingsLoaded || !classesLoaded || !examsLoaded) return; // wait for saved data

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Platform } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Platform, Linking } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme, useStyles } from '../theme/ThemeContext';
 import { useSettings } from '../context/SettingsContext';
@@ -41,7 +41,7 @@ export default function SettingsScreen({ navigation }) {
   const runTest = async () => {
     const r = await sendTestAlarm(settings.alarmTone);
     setTestMsg(
-      r === 'sent' ? 'Test alarm will ring in 3 seconds. Swipe it away to stop.'
+      r === 'sent' ? 'Test alarm will ring 3 times, starting in 3 seconds. Tap it to stop.'
       : r === 'web' ? 'Browser test: you should hear a beep. On your phone it shows a notification.'
       : 'Notifications are blocked. Turn them on in your phone: Settings > Apps > ' + APP.name + ' > Notifications.'
     );
@@ -110,7 +110,7 @@ export default function SettingsScreen({ navigation }) {
           setupNotifications(id);
         }}
       />
-      <Text style={styles.hint}>Each alarm rings for 15 seconds, up to 3 times, until you swipe it away.</Text>
+      <Text style={styles.hint}>Each alarm rings 3 times. Tap the notification to stop the rest.</Text>
 
       {/* Alarms */}
       <Text style={common.h2}>Alarms & reminders</Text>
@@ -172,6 +172,19 @@ export default function SettingsScreen({ navigation }) {
       </View>
       {testMsg ? <Text style={styles.hint}>{testMsg}</Text> : null}
 
+      {Platform.OS !== 'web' ? (
+        <View style={styles.helpCard}>
+          <Text style={styles.helpTitle}>Alarm not ringing when the phone is locked?</Text>
+          <Text style={styles.helpText}>1. Allow this app to start and run in the background (Phone Manager, Auto-start, or Battery settings).</Text>
+          <Text style={styles.helpText}>2. Turn off battery optimization for this app.</Text>
+          <Text style={styles.helpText}>3. Do not swipe the app away from recent apps. Lock it there if your phone allows.</Text>
+          <Text style={styles.helpText}>4. Allow notifications on the lock screen, and turn the volume up.</Text>
+          <TouchableOpacity style={styles.helpBtn} onPress={() => Linking.openSettings().catch(() => {})}>
+            <Text style={styles.helpBtnText}>Open app settings</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       {/* Support */}
       <Text style={common.h2}>Support</Text>
       <View style={common.listCard}>
@@ -228,5 +241,10 @@ const makeStyles = (C) =>
     padRow: { flexDirection: 'row', paddingVertical: 14 },
     subRow: { paddingBottom: 14 },
     subLabel: { fontSize: 13, fontWeight: '600', color: C.muted, marginBottom: 8 },
+    helpCard: { backgroundColor: C.card, borderRadius: 18, padding: 16, marginTop: 12, ...getShadow(C) },
+    helpTitle: { fontSize: 14.5, fontWeight: '700', color: C.text, marginBottom: 8 },
+    helpText: { fontSize: 13, color: C.muted, lineHeight: 19, marginTop: 4 },
+    helpBtn: { alignSelf: 'flex-start', backgroundColor: C.violet + '1A', borderRadius: 999, paddingVertical: 10, paddingHorizontal: 16, marginTop: 12 },
+    helpBtnText: { color: C.violet, fontWeight: '700', fontSize: 13 },
     hint: { fontSize: 12.5, color: C.muted, marginTop: 8, marginLeft: 4, lineHeight: 18 },
   });
