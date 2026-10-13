@@ -16,7 +16,11 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       [
@@ -57,6 +61,12 @@
       "eas": {
         "projectId": "9f4897dc-5b50-4136-90ec-1da15fb1e097"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9f4897dc-5b50-4136-90ec-1da15fb1e097"
     }
   }
 }
